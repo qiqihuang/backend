@@ -158,6 +158,7 @@ BackendOutputResponder::Finalize()
       auto& response_output = pr.second;
 
       bool cuda_used = false;
+      std::cout << "Finalize copy" << std::endl;
       RESPOND_AND_SET_NULL_IF_ERROR(
           response,
           CopyBuffer(
@@ -217,6 +218,7 @@ BackendOutputResponder::SetFixedSizeOutputBuffer(
     }
 
     pending_pinned_byte_size_ += tensor_byte_size;
+    std::cerr << "Adding pending pinned" << std::endl;
     pending_pinned_outputs_.push_back(std::make_pair(
         response, OutputData(
                       output_name, buffer, tensor_byte_size, actual_memory_type,
@@ -224,6 +226,7 @@ BackendOutputResponder::SetFixedSizeOutputBuffer(
   } else {
     // Direct copy without intermediate pinned memory.
     bool cuda_used = false;
+    std::cerr << "direct copy" <<std::endl;
     err = CopyBuffer(
         output_name, tensor_memory_type, tensor_memory_type_id,
         actual_memory_type, actual_memory_type_id, tensor_byte_size,

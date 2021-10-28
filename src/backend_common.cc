@@ -62,7 +62,18 @@ void CUDART_CB
 MemcpyHost(void* args)
 {
   auto* copy_params = reinterpret_cast<CopyParams*>(args);
+  std::cerr << "copying "<< copy_params->byte_size_ << " bytes from " << copy_params->src_ << " to " << copy_params->dst_ << std::endl;
+  float acc_val = 0.0;
+    for(int i = 0; i < (int)(copy_params->byte_size_/sizeof(float)); i++) {
+      acc_val += *(((float*)copy_params->src_) + i);
+    }
+    std::cout << "before copy validation complete acc_val: " << acc_val << " ByteSize: " << copy_params->byte_size_ << std::endl;
   memcpy(copy_params->dst_, copy_params->src_, copy_params->byte_size_);
+  acc_val = 0.0;
+    for(int i = 0; i < (int)(copy_params->byte_size_/sizeof(float)); i++) {
+      acc_val += *(((float*)copy_params->dst_) + i);
+    }
+    std::cout << "after copy validation complete acc_val: " << acc_val << " ByteSize: " << copy_params->byte_size_ << std::endl;
   delete copy_params;
 }
 #endif  // TRITON_ENABLE_GPU
