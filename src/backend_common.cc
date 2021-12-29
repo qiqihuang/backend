@@ -24,6 +24,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "triton/backend/aes.hpp"
 #include "triton/backend/backend_common.h"
 
 #ifdef _WIN32
@@ -1238,6 +1239,151 @@ TryParseModelStringParameter(
     *value = default_value;
     return nullptr;  // success
   }
+}
+
+TRITONSERVER_Error*
+aes_encrypt_cbc(const std::string& sKey, const std::string& sDataIn, std::string& sDataOut)
+{
+    uint8_t* key = (uint8_t *)sKey.c_str();
+    size_t nLen = sDataIn.size();
+    uint8_t* buf = new uint8_t[nLen];
+    memcpy(buf, sDataIn.c_str(), nLen);
+
+    uint8_t iv[]  = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
+
+    struct AES_ctx ctx;
+    AES_init_ctx_iv(&ctx, key, iv);
+    AES_CBC_encrypt_buffer(&ctx, buf, nLen);
+
+    sDataOut.assign((char*)buf, nLen);
+      delete [] buf;
+    buf = NULL;
+
+    printf("CBC encrypt SUCCESS!\n");
+    return nullptr;
+}
+
+TRITONSERVER_Error*
+aes_decrypt_cbc(const std::string& sKey, const std::string& sDataIn, std::string& sDataOut)
+{
+    uint8_t* key = (uint8_t *)sKey.c_str();
+    size_t nLen = sDataIn.size();
+    uint8_t* buf = new uint8_t[nLen];
+    memcpy(buf, sDataIn.c_str(), nLen);
+
+    uint8_t iv[]  = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
+
+    struct AES_ctx ctx;
+    AES_init_ctx_iv(&ctx, key, iv);
+    AES_CBC_decrypt_buffer(&ctx, buf, nLen);
+
+    sDataOut.assign((char*)buf, nLen);
+    delete [] buf;
+    buf = NULL;
+
+    printf("CBC decrypt SUCCESS!\n");
+    return nullptr;
+}
+
+bool ReadFile2Buffer(const std::string& sFilePath, const std::string& sMode, std::string& sBuffer)
+{
+	FILE* fp = fopen(sFilePath.c_str(), sMode.c_str());
+	if (NULL == fp)
+	{
+		printf("fopen the file %s failed, Error:%d, Reason:%s", sFilePath.c_str(), errno, strerror(errno));
+		return false;
+	}
+
+	bool bRet = false;
+
+	do
+	{
+		if (0 != fseek(fp, 0, SEEK_END))
+		{
+			//LCOV_EXCL_START
+			printf("fseek(SEEK_END) the file %s failed, Error:%d, Reason:%s", sFilePath.c_str(), errno, strerror(errno));
+			break;
+			//LCOV_EXCL_STOP
+		}
+
+		long nLen = ftell(fp);
+		if (-1 == nLen)
+		{
+			//LCOV_EXCL_START
+			printf("ftell the file %s failed, Error:%d, Reason:%s", sFilePath.c_str(), errno, strerror(errno));
+			break;
+			//LCOV_EXCL_STOP
+		}
+
+		if (0 != fseek(fp, 0, SEEK_SET))
+		{
+			//LCOV_EXCL_START
+			printf("fseek(SEEK_SET) the file %s failed, Error:%d, Reason:%s", sFilePath.c_str(), errno, strerror(errno));
+			break;
+			//LCOV_EXCL_STOP
+		}
+
+		char* pBuf = new char[nLen];
+		memset(pBuf, '\0', nLen);
+
+		do
+		{
+			size_t nRead = fread(pBuf, sizeof(char), nLen, fp);
+			if (nRead != (size_t)nLen)
+			{
+				//LCOV_EXCL_START
+				printf("fread the file %s failed, Error:%d, Reason:%s, read:%ld, size:%ld", sFilePath.c_str(), errno, strerror(errno), nRead, nLen);
+				break;
+				//LCOV_EXCL_STOP
+			}
+
+			sBuffer.assign(pBuf, nLen);
+
+			bRet = true;
+
+		} while (false);
+
+		delete [] pBuf;
+		pBuf = NULL;
+
+	} while (false);
+
+	fclose(fp);
+	fp = NULL;
+
+	return bRet;
+}
+
+bool WriteBuffer2File(const std::string& sFilePath, const std::string& sMode, const std::string& sBuffer)
+{
+	FILE *fp = fopen(sFilePath.c_str(), sMode.c_str());
+	if (NULL == fp)
+	{
+		printf("fopen the file %s failed, Error:%d, Reason:%s", sFilePath.c_str(), errno, strerror(errno));
+		return false;
+	}
+
+	bool bRet = false;
+
+	do
+	{
+		size_t nWrite = fwrite(sBuffer.c_str(), sizeof(char), sBuffer.size(), fp);
+		if (nWrite != sBuffer.size())
+		{
+			//LCOV_EXCL_START
+			printf("fwrite the file %s failed, Error:%d, Reason:%s, write:%ld, size:%ld", sFilePath.c_str(), errno, strerror(errno), nWrite, sBuffer.size());
+			break;
+			//LCOV_EXCL_STOP
+		}
+
+		bRet = true;
+
+	} while (false);
+
+	fclose(fp);
+	fp = NULL;
+
+	return bRet;
 }
 
 }}  // namespace triton::backend

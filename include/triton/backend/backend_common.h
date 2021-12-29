@@ -598,4 +598,13 @@ TRITONSERVER_Error* TryParseModelStringParameter(
     triton::common::TritonJson::Value& params, const std::string& mkey,
     uint64_t* value, const uint64_t& default_value);
 
+TRITONSERVER_Error* aes_encrypt_cbc(
+  const std::string& sKey, const std::string& sDataIn, std::string& sDataOut);
+
+TRITONSERVER_Error* aes_decrypt_cbc(
+  const std::string& sKey, const std::string& sDataIn, std::string& sDataOut);
+
+bool ReadFile2Buffer(const std::string& sFilePath, const std::string& sMode, std::string& sBuffer);
+bool WriteBuffer2File(const std::string& sFilePath, const std::string& sMode, const std::string& sBuffer);
+
 }}  // namespace triton::backend

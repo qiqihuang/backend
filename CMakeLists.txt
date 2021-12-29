@@ -35,8 +35,8 @@ option(TRITON_ENABLE_GPU "Enable GPU support in backend utilities" ON)
 option(TRITON_ENABLE_MALI_GPU "Enable Arm MALI GPU support in backend utilities" OFF)
 option(TRITON_ENABLE_STATS "Include statistics collections in backend utilities" ON)
 
-set(TRITON_COMMON_REPO_TAG "main" CACHE STRING "Tag for triton-inference-server/common repo")
-set(TRITON_CORE_REPO_TAG "main" CACHE STRING "Tag for triton-inference-server/core repo")
+set(TRITON_COMMON_REPO_TAG "r21.11" CACHE STRING "Tag for triton-inference-server/common repo")
+set(TRITON_CORE_REPO_TAG "r21.11" CACHE STRING "Tag for triton-inference-server/core repo")
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
@@ -81,6 +81,7 @@ endif() # TRITON_ENABLE_GPU
 # Backend library containing useful source and utilities
 #
 set(SRC_FILES 
+  "src/aes.c"
   "src/backend_common.cc"
   "src/backend_input_collector.cc"
   "src/backend_memory.cc"
